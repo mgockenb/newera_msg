@@ -209,7 +209,7 @@ async function fetchJobs(keywords: string): Promise<JobPartial[]> {
         external_id: `li_${item.id}`,
         title: item.title,
         company: item.company,
-        location: item.location || 'Araba-Alava, Basque Country, Spain',
+        location: item.location || 'Basque Country, Spain',
         url: item.url,
         description,
         posted_at: item.postedAt ? new Date(item.postedAt).toISOString() : null,
