@@ -273,6 +273,7 @@ async function llmComplete(prompt: string, nPredict: number, signal: AbortSignal
   const provider = prefs.llmProvider ?? 'ollama';
   const baseUrl = resolveBaseUrl(provider, prefs.llmBaseUrl ?? '');
   const model = prefs.model;
+  console.log('[llm] provider/model:', provider, model);
   switch (provider) {
     case 'ollama': return ollamaComplete(baseUrl, model, prompt, nPredict, signal);
     case 'lmstudio': return lmstudioComplete(baseUrl, model, prompt, nPredict, signal);
