@@ -11,19 +11,9 @@ For local development only:
 - [Bun](https://bun.sh) ≥ 1.1
 
 ## Quick Start (Docker — recommended)
-
+From the terminal in the root directory of the repo:
 ```bash
-# 1. Copy the example env file and fill it in
-cp .env.example .env
-
-# 2. Create runtime directories if they don't exist
-mkdir -p db backups data
-
-# 3. Add your resume and preferences
-cp data/resume.example.md data/resume.md        # edit to match your CV
-cp data/preferences.example.md data/preferences.md  # edit your preferences
-
-# 4. Start
+# 1. Start
 docker compose up -d
 ```
 
@@ -46,12 +36,11 @@ Create a `.env` file in the project root (see `.env.example`):
 # If not set, the app is accessible without a password (fine for local-only use)
 AUTH_SECRET=choose_a_strong_password
 
-# llama.cpp fallback URL — used when provider is llamacpp and no URL is saved in Settings
-# Docker Compose sets this to http://host.docker.internal:8080 automatically
-LLAMACPP_BASE_URL=http://localhost:8080
+# Optional: override default paths
+# DB_PATH=./db/jobs.db
+# BACKUP_DIR=./backups
+# OLLAMA_BASE_URL=http://localhost:11434
 ```
-
-`LLAMACPP_BASE_URL` is set automatically by Docker Compose to reach llama.cpp on the host via `host.docker.internal:8080`. Override it if the server runs elsewhere.
 
 ## LLM Providers
 
@@ -197,8 +186,12 @@ bun run test:e2e    # in another
 |----------|---------------------|-----------------------------------------|
 | LinkedIn | Guest API (no auth) | Rate-limited — 3–5s delay per keyword   |
 | Jobindex | HTML scraping       | Danish job board (jobindex.dk)          |
+| Arbeitnow| |
+| RemoteOk | |
+| Remotive | |
 
 Search terms are configured per-source in **Settings → Preferences**. The LLM scores each job 0–100 based on your resume and preferences.
+**The location preference is currently not applied. This repo only searches **Alava, Basque Country, Spain**.
 
 ## Logs
 
