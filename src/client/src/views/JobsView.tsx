@@ -137,8 +137,7 @@ export default function JobsView({ refreshKey, isFetching, status }: Props) {
   const [pinnedIds, setPinnedIds] = useState<Set<string> | null>(null);
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [bulkLoading, setBulkLoading] = useState(false);
-  const [rescoring, setRescoring] = useState(false);
-  const [staleBannerDismissed, setStaleBannerDismissed] = useState(false);
+const [staleBannerDismissed, setStaleBannerDismissed] = useState(false);
   const [rescoringStale, setRescoringStale] = useState(false);
   const [focusedIndex, setFocusedIndex] = useState<number>(-1);
   const [showShortcuts, setShowShortcuts] = useState(false);
@@ -392,32 +391,6 @@ export default function JobsView({ refreshKey, isFetching, status }: Props) {
     }
   }
 
-  async function handleRescoreAll() {
-    if (rescoring) return;
-    setRescoring(true);
-    try {
-      const res = await fetch('/api/jobs/rescore-all', { method: 'POST' });
-      if (!res.ok) {
-        toast('Re-score failed — please try again');
-      } else {
-        queryClient.setQueryData<InfiniteData<JobsPage>>(['jobs', refreshKey], (old) => {
-          if (!old) return old;
-          return {
-            ...old,
-            pages: old.pages.map(p => ({
-              ...p,
-              jobs: p.jobs.map(j =>
-                j.status !== 'rejected' ? { ...j, match_score: null, match_reasoning: null, match_summary: null } : j
-              ),
-            })),
-          };
-        });
-      }
-    } finally {
-      setRescoring(false);
-    }
-  }
-
   async function rescoreStale() {
     if (rescoringStale) return;
     setRescoringStale(true);
@@ -525,10 +498,13 @@ export default function JobsView({ refreshKey, isFetching, status }: Props) {
   const remotiveCount = jobs.filter(j => j.source === 'remotive').length;
   const arbeitnowCount = jobs.filter(j => j.source === 'arbeitnow').length;
   const remoteokCount = jobs.filter(j => j.source === 'remoteok').length;
-  const unreadCount = jobs.filter(j => j.seen_at === null && j.status !== 'rejected').length;
-  const unsavedCount = jobs.filter(j => j.status === 'new').length;
-  const savedCount = jobs.filter(j => j.status === 'saved').length;
-  const rejectedCount = jobs.filter(j => j.status === 'rejected').length;
+  const visibleJobs = hideJobsFromDisabledSources
+    ? jobs.filter(j => !disabledSources.includes(j.source))
+    : jobs;
+  const unreadCount = visibleJobs.filter(j => j.seen_at === null && j.status !== 'rejected').length;
+  const unsavedCount = visibleJobs.filter(j => j.status === 'new').length;
+  const savedCount = visibleJobs.filter(j => j.status === 'saved').length;
+  const rejectedCount = visibleJobs.filter(j => j.status === 'rejected').length;
 
   // Determine whether to animate the list (filter changed)
   const shouldAnimate = !prefersReducedMotion && filterKey !== prevFilterKey.current;
@@ -613,14 +589,6 @@ export default function JobsView({ refreshKey, isFetching, status }: Props) {
               className={`shrink-0 px-2.5 py-2 rounded-sm border border-border text-[0.8125rem] font-medium cursor-pointer ${compact ? 'bg-border text-text' : 'bg-transparent text-text-3'}`}
             >
               {compact ? "≡" : "⊞"}
-            </button>
-            <button
-              onClick={handleRescoreAll}
-              disabled={rescoring || hasPendingScores}
-              title="Re-score all jobs"
-              className="shrink-0 px-2.5 py-2 rounded-sm border border-border bg-transparent text-text-3 cursor-pointer text-[0.8125rem] disabled:opacity-40 disabled:cursor-not-allowed"
-            >
-              {rescoring ? "…" : "↻"}
             </button>
             <button
               onClick={() => setShowShortcuts(true)}

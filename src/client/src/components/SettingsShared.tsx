@@ -5,12 +5,14 @@ export interface Preferences {
   commutableLocations: string;
   remote: string[];
   seniority: 'any' | 'junior' | 'mid' | 'senior' | 'lead';
-  minSalaryDkk: number | null;
+  minSalary: number | null;
+  salaryCurrency: 'dkk' | 'eur' | 'usd';
   techInterests: string;
   techAvoid: string;
   companyBlacklist: string;
-  linkedinSearchTerms: string;
-  jobindexSearchTerms: string;
+  country: 'denmark' | 'spain';
+  includeRemote: boolean;
+  searchTerms: string;
   notes: string;
   lowScoreThreshold: number;
   defaultHideLowScore: boolean;
@@ -34,12 +36,14 @@ export const EMPTY_PREFS: Preferences = {
   commutableLocations: '',
   remote: [],
   seniority: 'any',
-  minSalaryDkk: null,
+  minSalary: null,
+  salaryCurrency: 'dkk',
   techInterests: '',
   techAvoid: '',
   companyBlacklist: '',
-  linkedinSearchTerms: '',
-  jobindexSearchTerms: '',
+  country: 'denmark',
+  includeRemote: true,
+  searchTerms: '',
   notes: '',
   lowScoreThreshold: 20,
   defaultHideLowScore: true,

@@ -99,8 +99,8 @@ if (!existsSync(prefsPath)) {
     const num = parseInt(salBlock.replace(/\D/g, ''), 10);
     if (!isNaN(num) && num > 0) {
       // Heuristic: values ≥ 100,000 are likely annual (DKK); divide by 12
-      prefs.minSalaryDkk = num >= 100_000 ? Math.round(num / 12) : num;
-      console.log(`  salary: ${num} → ${prefs.minSalaryDkk} DKK/month`);
+      prefs.minSalary = num >= 100_000 ? Math.round(num / 12) : num;
+      console.log(`  salary: ${num} → ${prefs.minSalary} DKK/month`);
     }
   }
 
@@ -139,20 +139,14 @@ if (!existsSync(prefsPath)) {
     }
   }
 
-  // LinkedIn search terms — strip trailing location suffixes
+  // Search terms (unified — strip trailing location suffixes)
   const liBlock = section(text, 'Search Terms');
   if (liBlock) {
     const terms = parseList(liBlock)
       .split('\n')
       .map(l => l.replace(/\s+(Copenhagen|København|Denmark|Danmark).*$/i, '').trim())
       .filter(Boolean);
-    prefs.linkedinSearchTerms = terms.join('\n');
-  }
-
-  // Jobindex search terms
-  const jiBlock = section(text, 'Jobindex Search Terms');
-  if (jiBlock) {
-    prefs.jobindexSearchTerms = parseList(jiBlock);
+    prefs.searchTerms = terms.join('\n');
   }
 
   setSetting('preferences', JSON.stringify(prefs));
@@ -160,11 +154,10 @@ if (!existsSync(prefsPath)) {
   console.log('  location:', prefs.location);
   console.log('  remote:', prefs.remote);
   console.log('  seniority:', prefs.seniority);
-  console.log('  minSalaryDkk:', prefs.minSalaryDkk);
+  console.log('  minSalary:', prefs.minSalary);
   console.log('  techInterests:', prefs.techInterests);
   console.log('  techAvoid:', prefs.techAvoid);
-  console.log('  linkedinSearchTerms:', prefs.linkedinSearchTerms.split('\n').join(', '));
-  console.log('  jobindexSearchTerms:', prefs.jobindexSearchTerms.split('\n').join(', '));
+  console.log('  searchTerms:', prefs.searchTerms.split('\n').join(', '));
 }
 
 console.log('\nDone. Open Settings in the app to review and adjust.');

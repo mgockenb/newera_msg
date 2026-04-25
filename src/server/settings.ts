@@ -18,11 +18,36 @@ export function getPreferences(): Preferences {
   const raw = getSetting('preferences');
   if (!raw) return { ...DEFAULT_PREFERENCES };
   try {
-    const parsed = JSON.parse(raw) as Partial<Preferences> & { remote?: unknown };
+    // Cast type to include legacy fields for migration
+    const parsed = JSON.parse(raw) as Partial<Preferences> & { remote?: unknown; linkedinSearchTerms?: string; jobindexSearchTerms?: string; minSalaryDkk?: number | null };
     // Migrate old single-string remote format → array
     if (typeof parsed.remote === 'string') {
       parsed.remote = parsed.remote === 'any' ? [] : [parsed.remote];
     }
+    // Migrate old per-source search terms → unified searchTerms (merge + deduplicate)
+    if (!parsed.searchTerms) {
+      const terms = [
+        ...(parsed.linkedinSearchTerms ?? '').split('\n'),
+        ...(parsed.jobindexSearchTerms ?? '').split('\n'),
+      ].map(s => s.trim()).filter(Boolean);
+      parsed.searchTerms = [...new Set(terms)].join('\n');
+    }
+    delete parsed.linkedinSearchTerms;
+    delete parsed.jobindexSearchTerms;
+    // Migrate minSalaryDkk → minSalary
+    if (parsed.minSalaryDkk !== undefined && parsed.minSalary === undefined) {
+      parsed.minSalary = parsed.minSalaryDkk;
+    }
+    // Migrate country 'global' → 'denmark' + includeRemote
+    if ((parsed.country as any) === 'global') {
+      parsed.country = 'denmark';
+      parsed.includeRemote = true;
+    }
+    // Default includeRemote if missing
+    if (parsed.includeRemote === undefined) {
+      parsed.includeRemote = true;
+    }
+    delete parsed.minSalaryDkk;
     return { ...DEFAULT_PREFERENCES, ...parsed };
   } catch {
     return { ...DEFAULT_PREFERENCES };

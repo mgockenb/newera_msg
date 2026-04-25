@@ -11,7 +11,7 @@ import authRoute from './routes/auth';
 import backupsRoute from './routes/backups';
 import { isAuthEnabled, validateSession } from './auth';
 import { startBackupScheduler } from './backup';
-import { startScheduler, getLastFetchAt, getIsFetching, getLastFetchNewJobs } from './scheduler';
+import { startScheduler, getLastFetchAt, getIsFetching, getLastFetchNewJobs, getIsFetchPaused, getIsScoringPaused, toggleFetchPause, toggleScoringPause } from './scheduler';
 import { checkLLMHealth, getLLMAvailable } from './llm';
 import { computePrefsHash } from './utils/hash';
 import { getSetting } from './settings';
@@ -72,6 +72,8 @@ app.get('/api/status', (c) => {
     last_fetch_at: getLastFetchAt(),
     counts,
     is_fetching: getIsFetching(),
+    is_fetch_paused: getIsFetchPaused(),
+    is_scoring_paused: getIsScoringPaused(),
     unscored_jobs: unscoredRow.count,
     score_distribution: scoreDist,
     llm_available: getLLMAvailable(),
@@ -81,10 +83,22 @@ app.get('/api/status', (c) => {
       resume: getResume().length > 0,
       preferences: (() => {
         const p = getPreferences();
-        return p.linkedinSearchTerms.trim().length > 0 || p.jobindexSearchTerms.trim().length > 0;
+        return p.searchTerms.trim().length > 0;
       })(),
     },
   });
+});
+
+// POST /api/scheduler/pause-fetch
+app.post('/api/scheduler/pause-fetch', (c) => {
+  const paused = toggleFetchPause();
+  return c.json({ paused });
+});
+
+// POST /api/scheduler/pause-scoring
+app.post('/api/scheduler/pause-scoring', (c) => {
+  const paused = toggleScoringPause();
+  return c.json({ paused });
 });
 
 // Serve static files (built React app)

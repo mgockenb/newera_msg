@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { toast } from "../components/Toast";
 import {
-  type Preferences, EMPTY_PREFS, inputClass,
+  type Preferences, EMPTY_PREFS, inputClass, labelClass,
   Field, NumberInput, Accordion, saveBtn,
 } from "../components/SettingsShared";
 
@@ -56,6 +56,19 @@ export default function PreferencesView() {
       const has = p.remote.includes(style);
       return { ...p, remote: has ? p.remote.filter(s => s !== style) : [...p.remote, style] };
     });
+  }
+
+  const COUNTRY_SOURCE_DEFAULTS: Record<string, { disable: string[]; enable: string[] }> = {
+    denmark: { disable: ['infojobs', 'tecnoempleo'], enable: ['jobindex'] },
+    spain:   { disable: ['jobindex'], enable: ['infojobs', 'tecnoempleo'] },
+  };
+
+  function handleCountryChange(country: 'denmark' | 'spain') {
+    const rules = COUNTRY_SOURCE_DEFAULTS[country];
+    const current = new Set(prefs.disabledSources);
+    rules.disable.forEach(s => current.add(s));
+    rules.enable.forEach(s => current.delete(s));
+    setPrefs(p => ({ ...p, country, disabledSources: [...current] }));
   }
 
   async function savePrefs() {
@@ -148,6 +161,28 @@ export default function PreferencesView() {
 
       {/* Job preferences */}
       <Accordion title="Job preferences" action={saveBtn(prefsDirty, savingPrefs, savePrefs)}>
+        {/* Country / Job Market */}
+        <div className="mb-4">
+          <label className={labelClass}>Job market</label>
+          <select
+            className={inputClass}
+            value={prefs.country}
+            onChange={e => handleCountryChange(e.target.value as 'denmark' | 'spain')}
+          >
+            <option value="denmark">🇩🇰 Denmark</option>
+            <option value="spain">🇪🇸 Spain</option>
+          </select>
+          <label className="flex items-center gap-2 cursor-pointer select-none text-sm text-text-2 mt-2">
+            <input
+              type="checkbox"
+              checked={prefs.includeRemote}
+              onChange={e => updatePref('includeRemote', e.target.checked)}
+              className="checkbox-styled"
+            />
+            Include remote / global jobs
+          </label>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <Field label="Preferred location">
             <input className={inputClass} value={prefs.location}
@@ -187,12 +222,24 @@ export default function PreferencesView() {
               <option value="lead">Lead / Principal</option>
             </select>
           </Field>
-          <Field label="Min salary (DKK/month)">
-            <NumberInput
-              value={prefs.minSalaryDkk}
-              onChange={v => updatePref('minSalaryDkk', v)}
-              min={0} step={1000} placeholder="e.g. 55000"
-            />
+          <Field label="Min salary / month">
+            <div className="flex gap-2">
+              <NumberInput
+                value={prefs.minSalary}
+                onChange={v => updatePref('minSalary', v)}
+                min={0} step={1000} placeholder="e.g. 55000"
+                className={inputClass + " flex-1 min-w-0"}
+              />
+              <select
+                className={inputClass + " flex-1 min-w-0"}
+                value={prefs.salaryCurrency}
+                onChange={e => updatePref('salaryCurrency', e.target.value as 'dkk' | 'eur' | 'usd')}
+              >
+                <option value="dkk">kr (DKK)</option>
+                <option value="eur">€ (EUR)</option>
+                <option value="usd">$ (USD)</option>
+              </select>
+            </div>
           </Field>
         </div>
 
@@ -217,18 +264,12 @@ export default function PreferencesView() {
           </Field>
         </div>
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          <Field label="LinkedIn search terms" hint="(one per line)">
+        <div>
+          <Field label="Search terms" hint="(one per line)">
             <textarea className={inputClass} style={{ height: '80px', resize: 'vertical' }}
-              value={prefs.linkedinSearchTerms}
-              onChange={e => updatePref('linkedinSearchTerms', e.target.value)}
-              placeholder={"frontend developer\nweb developer"} />
-          </Field>
-          <Field label="Jobindex search terms" hint="(one per line)">
-            <textarea className={inputClass} style={{ height: '80px', resize: 'vertical' }}
-              value={prefs.jobindexSearchTerms}
-              onChange={e => updatePref('jobindexSearchTerms', e.target.value)}
-              placeholder={"frontend udvikler\nwebudvikler"} />
+              value={prefs.searchTerms ?? ''}
+              onChange={e => updatePref('searchTerms', e.target.value)}
+              placeholder={"software engineer\nfrontend developer\nengineering manager"} />
           </Field>
         </div>
 

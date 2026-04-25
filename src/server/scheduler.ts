@@ -3,6 +3,8 @@ import { fetchLinkedIn } from './sources/linkedin';
 import { fetchRemotive } from './sources/remotive';
 import { fetchArbeitnow } from './sources/arbeitnow';
 import { fetchRemoteOK } from './sources/remoteok';
+import { fetchInfojobs } from './sources/infojobs';
+import { fetchTecnoempleo } from './sources/tecnoempleo';
 import { fetchJobDescription } from './sources/linkedin';
 import { analyzeJob } from './llm';
 import db from './db';
@@ -16,6 +18,8 @@ import { sendFetchSummary, type ScoredJob } from './telegram';
 let lastFetchAt: string | null = null;
 let isFetching = false;
 let lastFetchNewJobs = 0;
+let isFetchPaused = false;
+let isScoringPaused = false;
 
 export function getLastFetchAt(): string | null {
   return lastFetchAt;
@@ -23,6 +27,10 @@ export function getLastFetchAt(): string | null {
 
 export function getIsFetching(): boolean { return isFetching; }
 export function getLastFetchNewJobs(): number { return lastFetchNewJobs; }
+export function getIsFetchPaused(): boolean { return isFetchPaused; }
+export function getIsScoringPaused(): boolean { return isScoringPaused; }
+export function toggleFetchPause(): boolean { isFetchPaused = !isFetchPaused; return isFetchPaused; }
+export function toggleScoringPause(): boolean { isScoringPaused = !isScoringPaused; return isScoringPaused; }
 
 type JobPartial = {
   source: string;
@@ -135,6 +143,10 @@ async function runScoringWorker(): Promise<void> {
 
   try {
     while (scoreQueue.size > 0) {
+      if (isScoringPaused) {
+        await new Promise(r => setTimeout(r, 5000));
+        continue;
+      }
       const entry = scoreQueue.entries().next().value;
       if (!entry) break;
       const [jobId, { autoReject }] = entry;
@@ -197,6 +209,10 @@ function waitForWorker(): Promise<void> {
 export async function fetchJobs(): Promise<number> {
   if (isFetching) {
     console.log('[scheduler] Fetch already in progress, skipping');
+    return 0;
+  }
+  if (isFetchPaused) {
+    console.log('[scheduler] Fetch paused, skipping');
     return 0;
   }
   isFetching = true;
@@ -280,6 +296,38 @@ export async function fetchJobs(): Promise<number> {
         if (batch5Ids.length > 0) enqueueForScoring(batch5Ids);
       } catch (err) {
         console.error('[scheduler] RemoteOK failed:', err);
+      }
+    }
+
+    // 10. Wait 30 seconds to avoid rate-limiting job boards
+    await new Promise(r => setTimeout(r, 30_000));
+
+    // 11. Fetch Infojobs
+    if (!disabledSources.includes('infojobs')) {
+      try {
+        const infojobsJobs = await fetchInfojobs();
+        console.log(`[scheduler] Infojobs: ${infojobsJobs.length} jobs`);
+        const batch6Ids = ingestBatch(infojobsJobs);
+        totalNew += batch6Ids.length;
+        if (batch6Ids.length > 0) enqueueForScoring(batch6Ids);
+      } catch (err) {
+        console.error('[scheduler] Infojobs failed:', err);
+      }
+    }
+
+    // 12. Wait 30 seconds to avoid rate-limiting job boards
+    await new Promise(r => setTimeout(r, 30_000));
+
+    // 13. Fetch Tecnoempleo
+    if (!disabledSources.includes('tecnoempleo')) {
+      try {
+        const tecnoempleoJobs = await fetchTecnoempleo();
+        console.log(`[scheduler] Tecnoempleo: ${tecnoempleoJobs.length} jobs`);
+        const batch7Ids = ingestBatch(tecnoempleoJobs);
+        totalNew += batch7Ids.length;
+        if (batch7Ids.length > 0) enqueueForScoring(batch7Ids);
+      } catch (err) {
+        console.error('[scheduler] Tecnoempleo failed:', err);
       }
     }
 

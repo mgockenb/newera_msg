@@ -7,12 +7,14 @@ const MOCK_PREFS = {
   commutableLocations: 'Malmö',
   remote: ['hybrid'],
   seniority: 'senior',
-  minSalaryDkk: 55000,
+  minSalary: 55000,
+  salaryCurrency: 'dkk',
+  includeRemote: true,
   techInterests: 'React, TypeScript',
   techAvoid: '',
   companyBlacklist: '',
-  linkedinSearchTerms: 'frontend developer',
-  jobindexSearchTerms: 'frontend udvikler',
+  country: 'denmark',
+  searchTerms: 'frontend developer',
   notes: '',
 };
 

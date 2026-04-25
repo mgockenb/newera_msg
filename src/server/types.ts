@@ -1,6 +1,6 @@
 export interface Job {
   id: string;
-  source: 'jobindex' | 'linkedin' | 'remotive' | 'arbeitnow' | 'remoteok';
+  source: 'jobindex' | 'linkedin' | 'remotive' | 'arbeitnow' | 'remoteok' | 'infojobs' | 'tecnoempleo';
   external_id: string;
   title: string;
   company: string;
@@ -28,12 +28,14 @@ export interface Preferences {
   commutableLocations: string; // e.g. "Malmö, Sweden"
   remote: string[];  // subset of ['onsite','hybrid','remote'], empty = any
   seniority: 'any' | 'junior' | 'mid' | 'senior' | 'lead';
-  minSalaryDkk: number | null;
+  minSalary: number | null;
+  salaryCurrency: 'dkk' | 'eur' | 'usd';
   techInterests: string;       // comma-separated
   techAvoid: string;           // comma-separated
   companyBlacklist: string;    // newline-separated
-  linkedinSearchTerms: string; // newline-separated
-  jobindexSearchTerms: string; // newline-separated
+  country: 'denmark' | 'spain';
+  includeRemote: boolean;
+  searchTerms: string; // newline-separated; used by all sources that support keyword search
   knownLanguages: string;       // comma-separated spoken languages (e.g. "English, Danish")
   notes: string;
   lowScoreThreshold: number;       // jobs below this score are considered "low score" (0-100)
@@ -58,12 +60,14 @@ export const DEFAULT_PREFERENCES: Preferences = {
   commutableLocations: '',
   remote: [],
   seniority: 'any',
-  minSalaryDkk: null,
+  minSalary: null,
+  salaryCurrency: 'dkk',
   techInterests: '',
   techAvoid: '',
   companyBlacklist: '',
-  linkedinSearchTerms: '',
-  jobindexSearchTerms: '',
+  country: 'denmark',
+  includeRemote: true,
+  searchTerms: '',
   knownLanguages: 'English',
   notes: '',
   lowScoreThreshold: 20,
@@ -79,7 +83,7 @@ export const DEFAULT_PREFERENCES: Preferences = {
   telegramEnabled: false,
   telegramNotifyThreshold: 80,
   appBaseUrl: 'http://localhost:3000',
-  disabledSources: [],
+  disabledSources: ['infojobs', 'tecnoempleo'],
   hideJobsFromDisabledSources: false,
 };
 

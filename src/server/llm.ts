@@ -74,7 +74,10 @@ function formatPreferences(p: Preferences): string {
   if (p.commutableLocations) lines.push(`Also commutable to: ${p.commutableLocations}`);
   if (Array.isArray(p.remote) && p.remote.length > 0) lines.push(`Work style preference: ${p.remote.join(' or ')}`);
   if (p.seniority && p.seniority !== 'any') lines.push(`Target seniority: ${p.seniority}`);
-  if (p.minSalaryDkk) lines.push(`Min salary: ${p.minSalaryDkk.toLocaleString('da-DK')} DKK/month`);
+  if (p.minSalary) {
+    const currencyLabel = p.salaryCurrency?.toUpperCase() ?? 'DKK';
+    lines.push(`Min salary: ${p.minSalary.toLocaleString('en-US')} ${currencyLabel}/month`);
+  }
   if (p.techInterests) lines.push(`Tech interests: ${p.techInterests}`);
   if (p.techAvoid) lines.push(`Tech to avoid: ${p.techAvoid}`);
   if (p.companyBlacklist) {
@@ -130,7 +133,7 @@ Write match_reasoning first — reason through the fit before committing to a sc
 match_reasoning: direct second-person assessment (use "you"/"your", not "the candidate"). If location is outside your preferred area, say so explicitly. Write this before deciding the score.
 match_score: integer 0–100. Must be consistent with the reasoning above.
 summary: factual description of the role — what the job is about, not an opinion.
-tags: up to 8 specific technologies, languages, frameworks, or tools mentioned in the job (e.g. "React", "TypeScript", "Node.js", "AWS"). Empty array if none identifiable.
+tags: up to 8 specific technologies, tools, frameworks, methodologies, or practices mentioned in the job (e.g. "React", "TypeScript", "AWS", "Agile", "Scrum", "SAFe", "Jira", "OKR"). Empty array if none identifiable.
 work_type: one of "remote", "hybrid", "onsite", or null if the posting does not clearly indicate the work arrangement.`;
 }
 
@@ -284,9 +287,9 @@ async function llmComplete(prompt: string, nPredict: number, signal: AbortSignal
 async function extractTagsFromDescription(description: string): Promise<string[]> {
   const truncated = description.length > 6_000 ? description.slice(0, 6_000) + '\n[truncated]' : description;
 
-  const prompt = `Extract all specific technologies, programming languages, frameworks, tools, and platforms explicitly mentioned in the job description below.
+  const prompt = `Extract all specific technologies, tools, frameworks, methodologies, and practices explicitly mentioned in the job description below. Include engineering management tools and practices (e.g. Agile, Scrum, SAFe, OKR, Jira, roadmapping) if mentioned.
 Return ONLY a JSON array of tag strings, nothing else. Maximum 8 tags. Empty array if none found.
-Example output: ["Java", ".NET", "Spring Boot", "Azure"]
+Example output: ["Java", "AWS", "Scrum", "Jira", "OKR"]
 
 Job Description:
 ${truncated}`;
