@@ -1,5 +1,5 @@
 import type { Job, Preferences } from './types';
-import { LLAMACPP_BASE_URL } from './config';
+import { LLAMACPP_BASE_URL, OLLAMA_BASE_URL } from './config';
 import { getPreferences, getSetting } from './settings';
 import { computePrefsHash } from './utils/hash';
 
@@ -9,9 +9,12 @@ const COVER_LETTER_TIMEOUT_MS = 8 * 60_000;
 export function resolveBaseUrl(provider: string, storedUrl: string): string {
   if (storedUrl) return storedUrl;
   switch (provider) {
-    case 'ollama': return 'http://localhost:11434';
-    case 'lmstudio': return 'http://localhost:1234';
-    default: return LLAMACPP_BASE_URL;
+    case 'ollama':
+      return OLLAMA_BASE_URL;
+    case 'lmstudio':
+      return 'http://localhost:1234';
+    default:
+      return LLAMACPP_BASE_URL;
   }
 }
 
@@ -273,6 +276,7 @@ async function llmComplete(prompt: string, nPredict: number, signal: AbortSignal
   const provider = prefs.llmProvider ?? 'ollama';
   const baseUrl = resolveBaseUrl(provider, prefs.llmBaseUrl ?? '');
   const model = prefs.model;
+  console.log('[llm] provider/model:', provider, model);
   switch (provider) {
     case 'ollama': return ollamaComplete(baseUrl, model, prompt, nPredict, signal);
     case 'lmstudio': return lmstudioComplete(baseUrl, model, prompt, nPredict, signal);

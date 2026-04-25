@@ -5,7 +5,7 @@ import { getPreferences } from '../routes/settings';
 type JobPartial = Omit<Job, 'id' | 'match_score' | 'match_reasoning' | 'match_summary' | 'tags' | 'status' | 'seen_at'>;
 
 // LinkedIn guest jobs API — no auth required, returns HTML job cards.
-// geoId=102194656: Greater Copenhagen area
+// geoId=101551702: Araba-Alava, Basque Country, Spain
 // f_TPR=r604800: posted in last 7 days (was 24h — too few results)
 // No experience level filter (f_E removed) — LLM scoring handles seniority
 // No work type filter (f_WT removed) — LLM scoring handles remote/hybrid preference
@@ -20,7 +20,7 @@ const COUNTRY_GEO_IDS: Record<string, string> = {
 const HEADERS = {
   'User-Agent': 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
   'Accept': 'text/html,application/xhtml+xml',
-  'Accept-Language': 'en-US,en;q=0.9',
+  'Accept-Language': 'en-US,en;q=0.9,es;q=0.8',
   'Connection': 'close',
 };
 
@@ -212,7 +212,7 @@ async function fetchJobs(keywords: string, geoId: string): Promise<JobPartial[]>
         external_id: `li_${item.id}`,
         title: item.title,
         company: item.company,
-        location: item.location || 'Copenhagen, Denmark',
+        location: item.location || 'Basque Country, Spain',
         url: item.url,
         description,
         posted_at: item.postedAt ? new Date(item.postedAt).toISOString() : null,
